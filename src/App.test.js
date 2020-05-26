@@ -109,3 +109,42 @@ test('movePieces left column to right column', ()=> {
     5,0,0,0,4,
   ])
 })
+
+
+test('game should detect victory condition', ()=> {
+  let result = Quixo.IsVictory([
+    0,0,0,0,0,
+    -1,-1,-1,-1,-1,
+    -1,-1,-1,-1,-1,
+    -1,-1,-1,-1,-1,
+    -1,-1,-1,-1,-1,
+  ], 0)
+
+  expect(result).toEqual(true)
+})
+
+
+test('game should detect victory condition if both players end at the same turn', ()=> {
+  let result = Quixo.IsVictory([
+    0,0,0,0,0,
+    -1,-1,-1,-1,-1,
+    1,1,1,1,1,
+    -1,-1,-1,-1,-1,
+    -1,-1,-1,-1,-1,
+  ], 0)
+
+  expect(result).toEqual(false)
+})
+
+
+test('game should detect diagonal victories', ()=> {
+  let result = Quixo.IsVictory([
+    0,0,0,0,0,
+    -1,0,-1,-1,-1,
+    1,1,0,1,1,
+    -1,-1,-1,0,-1,
+    -1,-1,-1,-1,0,
+  ], 0)
+
+  expect(result).toEqual(true)
+})

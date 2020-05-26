@@ -6,57 +6,52 @@ class Board extends React.Component {
     super()
     this.fromPoint = null;
     this.to = null;
+    // Clickables are what is clickable _after you've picked a piece_
+    this.clickables = [];
+  }
+
+  validPositions(i) {
+    let [row, column] = [Math.floor(i/5), i % 5]
+    let toGrid = function(x,y) { return x*5 + y}
+    return [
+      toGrid(0, column),
+      toGrid(4, column),
+      toGrid(row, 0),
+      toGrid(row, 4),
+    ].filter(function(item) {
+      return item !== i;
+    });
   }
   onClick(id) {
+    if (this.props.ctx.gameover) {return}
     if (!this.fromPoint) {
       this.fromPoint = id
+      this.clickables = this.validPositions(id)
     } else {
       this.props.moves.clickCell(this.fromPoint, id)
       this.fromPoint = null
-      this.props.events.endTurn();
+      this.props.events.endTurn()
     }
+    this.forceUpdate();
   }
 
-  // isActive(id) {
-  //   if (!this.props.isActive) return false;
-  //   // TODO: Improve
-  //   if (this.props.G.cells[id] === 0 || this.props.G.cells[id] === 1) return false;
-  //   return true;
-  // }
-
   render() {
-    let winner = '';
+    let winner = false;
     let lastPlayed = '';
-    // if (this.props.ctx.gameover) {
-    //   winner =
-    //     this.props.ctx.gameover.winner !== undefined ? (
-    //       <div id="winner">Winner: {this.props.ctx.gameover.winner === "0" ? "Red" : "Black"}
-    //       {this.props.ctx.gameover.stalemate !== undefined ? <span> by stalemate</span> : "" }
-    //       </div>
-    //     ) : (
-    //       <div id="winner">Draw!</div>
-    //     );
-    // }
+    if (this.props.ctx.gameover) {
+      winner = <div id="winner">Winner: {this.props.ctx.gameover.winner === "0" ? "X" : "O"}</div>
+    }
 
-    // if (this.props.G.lastPlayed) {
-    //   lastPlayed = <div>
-    //     <p>Last Played Tile: </p>
-    //     <table class="board">
-    //     <tr>
-    //       {Tile(this.props.G.lastPlayed)}
-    //     </tr>
-    //     </table>
-    //     </div>
-    // }
+    let x_or_zero = this.props.ctx.currentPlayer == 0 ? "X" :  "O"
+
+    if (this.props.ctx.currentPlayer) {
+      lastPlayed = <div><p>Current Turn: {x_or_zero}</p></div>
+    }
 
     function Tile(val, interactive=false, id=null, ctx=null) {
-      // const suitLookup = function(val) {
-      //   const SUITS = ['♠','♥','♦','♣'];
-      //   let index = parseInt(val[1], 10) - 1;
-      //   return SUITS[index];
-      // }
+      let currentPlayer = ctx.props.ctx.currentPlayer
       let text = '';
-      if (val === -1 ) {
+      if (val == -1 ) {
         text = " "
       } else if (val == 0) {
         text = "X"
@@ -66,16 +61,36 @@ class Board extends React.Component {
         text = "?"
       }
 
-      if(interactive) {
-        return <td data-tile={val} key={id} onClick={() => ctx.onClick(id)}>
-            {text}
-          </td>
+      // we haven't clicked the first piece yet
+      if(ctx.fromPoint === null) {
+        // If game has ended, everything is unclickable
+        if (ctx.props.ctx.gameover) interactive = false
+        if(interactive & (val == -1|| val == currentPlayer)) {
+          return <td key={id} style={{backgroundColor:"white"}} data-tile={val} key={id} onClick={() => ctx.onClick(id)}>
+              {text}
+            </td>
+        }
+        else {
+          return <td key={id} style={{backgroundColor:"#ecf0f1"}} data-tile={val}>
+              {text}
+            </td>
+        }
+
       }
+      // we have clicked fromPoint and only this.clickables are worthy of being interactive
       else {
-        return <td data-tile={val}>
-            {text}
-          </td>
+        if (ctx.clickables.indexOf(id) > -1) {
+         return <td style={{backgroundColor:"white"}} data-tile={val} key={id} onClick={() => ctx.onClick(id)}>
+                      {text}
+                    </td>
+        } else {
+          return <td style={{backgroundColor:"#ecf0f1"}} data-tile={val}>
+              {text}
+            </td>
+        }
       }
+
+
     }
 
 
@@ -95,8 +110,8 @@ class Board extends React.Component {
         <table class="board">
           <tbody>{tbody}</tbody>
         </table>
-        // {winner}
-        // {lastPlayed}
+        {winner}
+        {lastPlayed}
       </div>
     );
   }

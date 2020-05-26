@@ -4,36 +4,52 @@ import _ from "lodash";
 // Our game state is a 1d array of size 25
 const WINNING_TILES = [
   // Every row
-  [0, 1, 2, 3, 4],
-  [5, 6, 7, 8, 9],
+  [0,  1,  2,  3,  4],
+  [5,  6,  7,  8,  9],
   [10, 11, 12, 13, 14],
   [15, 16, 17, 18, 19],
   [20, 21, 22, 23, 24],
 
-  // Every column
-  [0, 5, 10, 15, 20],
+  // Every column],
   [1, 6, 11, 16, 21],
   [2, 7, 12, 17, 22],
   [3, 8, 13, 18, 23],
-  [4, 9, 15, 19, 24],
+  [4, 9, 14, 19, 24],
+
+  // // top-left to bottom-right diagonal
+  [0,6,12,18,24],
+  // // bottom-left to top-right diagonal
+  [20,16,12,8,4]
 ];
 
 const ZERO = 0;
 const FIVE = 5;
 const FOUR = 4;
-
-// const EDGES = [0, 1, 2, 3, 4, 9, 14, 19, 24, 23, 22, 21, 20, 15, 10, 5];
-
-function IsVictory(grid, playerIndex) {
-  const isRowComplete = (row) => {
-    const symbols = row.map((i) => grid[i]);
-    return symbols.every((i) => i !== null && i === symbols[0]);
-  };
-
-  return WINNING_TILES.map(isRowComplete).some((i) => i === playerIndex);
-}
+const EDGES = [0, 1, 2, 3, 4, 9, 14, 19, 24, 23, 22, 21, 20, 15, 10, 5];
 
 const Quixo = {
+  IsVictory: function(grid, playerIndex) {
+    let DidIWin = false;
+    let DidYouWin = false;
+    playerIndex = parseInt(playerIndex, 10);
+    let otherPlayer = !(playerIndex)
+
+    const isSetComplete = (row) => {
+      const symbols = row.map((i) => grid[i]);
+      return symbols.every((i) => i !== null && i === symbols[0]);
+    };
+
+    for(let tileSet of WINNING_TILES) {
+      let values = grid.filter((val, index) => {
+        return (tileSet.indexOf(index) > -1)
+      })
+
+      DidIWin = DidIWin || values.every((x)=>x==playerIndex)
+      DidYouWin = DidYouWin || values.every((x)=>x==otherPlayer)
+    }
+    // The player to make a line with his/her opponent’s symbol loses the game, even if he/she makes a line with his/her own symbol at the same time
+    return DidIWin && (!DidYouWin)
+  },
   toRowColumn: function(i) {
     return [Math.floor(i / FIVE), i % FIVE];
   },
@@ -75,21 +91,23 @@ const Quixo = {
   turn: {
     moveLimit: 1,
   },
-  // ai: {
-  //   enumerate: (G, ctx) => {
-  //     let moves = [];
-  //     for (let i = 0; i < 16; i++) {
-  //       if (unclaimed(G.cells[i]) && validMove(G.cells[i], i, G.lastPlayed)) {
-  //         moves.push({ move: "clickCell", args: [i] });
-  //       }
-  //     }
-  //     return moves;
-  //   },
-  // },
+  ai: {
+    enumerate: (G, ctx) => {
+      let moves = [];
+      for(let fromPiece of EDGES) {
+        // If the piece is blank or if the piece is ours
+        if (G.grid[fromPiece] == ctx.currentPlayer || G.grid[fromPiece] == -1) {
+          for(let wherePiece of Quixo.validPositions(fromPiece)) {
+            moves.push({ move: "clickCell", args: [fromPiece, wherePiece] });
+          }
+        }
+      }
+      return moves;
+    },
+  },
   setup: (ctx) => ({
     // Initialized to -1 for all positions
-    grid: Array(25).fill(-1),
-    lastPlayed: null,
+    grid: Array(25).fill(-1)
   }),
 
   moves: {
@@ -118,23 +136,10 @@ const Quixo = {
     },
   },
 
-  // endIf: (G, ctx) => {
-  //   if (IsVictory(G.cells)) {
-  //     return { winner: ctx.currentPlayer };
-  //   }
-
-  //   if (G.cells.filter(unclaimed).length === 0) {
-  //     return { draw: true };
-  //   }
-
-  //   let numMoves = Okiya.ai.enumerate(G, ctx).length;
-
-  //   if (numMoves === 0) {
-  //     return {
-  //       winner: ctx.currentPlayer,
-  //       stalemate: true,
-  //     };
-  //   }
-  // },
+  endIf: (G, ctx) => {
+    if (Quixo.IsVictory(G.grid, ctx.currentPlayer)) {
+      return { winner: ctx.currentPlayer };
+    }
+  },
 };
 export default Quixo;
