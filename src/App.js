@@ -44,16 +44,16 @@ const Quixo = {
     let [fromRow, fromColumn] = Quixo.toRowColumn(from);
     let [toRow, toColumn] = Quixo.toRowColumn(to);
 
-    let RR = _.range(toRow, fromRow).concat([fromRow])
-    let CC = _.range(toColumn, fromColumn).concat([fromColumn])
+    let RR = _.range(toRow, fromRow).concat([fromRow]);
+    let CC = _.range(toColumn, fromColumn).concat([fromColumn]);
 
     let temp = parseInt(player, 10);
-    for(let r of RR) {
-      for(let c of CC) {
-        let newPiece = grid[Quixo.toGrid(r,c)];
-        let ii=Quixo.toGrid(r,c)
+    for (let r of RR) {
+      for (let c of CC) {
+        let newPiece = grid[Quixo.toGrid(r, c)];
+        let ii = Quixo.toGrid(r, c);
         grid[ii] = temp;
-        temp = newPiece
+        temp = newPiece;
       }
     }
     return grid;
@@ -62,22 +62,13 @@ const Quixo = {
   // returns an array of valid positions it can re-enter the board
   // Assumes that only a border piece is passed here.
   validPositions: function(i) {
-    let [row, column] = Quixo.toRowColumn(i),
-      basicSet = [];
-
-    // top or bottom row
-    if (row === ZERO || row === FOUR) {
-      basicSet = [FIVE * (FOUR - row) + column, FIVE * row, FIVE * row + FOUR];
-    } else if (column === ZERO || column === FOUR) {
-      // left||right column
-      basicSet = [FIVE * FOUR + column, column, FIVE * row + FOUR - column];
-    } else {
-      return INVALID_MOVE;
-    }
-
-    // if the basicSet includes the original item
-    // remove it
-    return basicSet.filter(function(item) {
+    let [row, column] = Quixo.toRowColumn(i);
+    return [
+      Quixo.toGrid(ZERO, column),
+      Quixo.toGrid(FOUR, column),
+      Quixo.toGrid(row, ZERO),
+      Quixo.toGrid(row, FOUR),
+    ].filter(function(item) {
       return item !== i;
     });
   },
@@ -115,7 +106,12 @@ const Quixo = {
 
       if (moves !== INVALID_MOVE && moves.indexOf(toWhere) !== -1) {
         //  We move around the pieces here
-        G.grid = Quixo.movePieces(G.grid, fromWhere, toWhere, ctx.currentPlayer);
+        G.grid = Quixo.movePieces(
+          G.grid,
+          fromWhere,
+          toWhere,
+          ctx.currentPlayer
+        );
       } else {
         return INVALID_MOVE;
       }
